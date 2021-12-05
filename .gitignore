@@ -1,0 +1,8 @@
+# local environment variable file
+.env 
+# built executables
+bin/ 
+# testing
+*.test
+# Idea
+.idea/
