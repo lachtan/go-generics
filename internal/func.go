@@ -5,6 +5,15 @@ import (
 	"fmt"
 )
 
+func GetOrCreate[T comparable, U any](m map[T]U, key T, create func() U) U {
+	value, exists := m[key]
+	if !exists {
+		value = create()
+		m[key] = value
+	}
+	return value
+}
+
 func Map[T, R any](list []T, transform func(T) R) []R {
 	result := make([]R, len(list))
 	for index, item := range list {

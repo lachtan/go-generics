@@ -7,6 +7,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestGetOrCreate(t *testing.T) {
+	m := map[string]int{"one": 1, "two": 2}
+
+	assert.Equal(t, 2, GetOrCreate[string,int](m, "two", func(key string) int { return 0}))
+	assert.Equal(t, map[string]int{"one": 1, "two": 2}, m)
+
+	assert.Equal(t, 3, GetOrCreate[string,int](m, "three", func(key string) int { return 3}))
+	assert.Equal(t, map[string]int{"one": 1, "two": 2, "three": 3}, m)
+}
+
 func TestMap(t *testing.T) {
 	src := []int{1, 2, 3}
 	dst := Map[int, string](src, func(item int) string { return fmt.Sprintf("[%d]", item) })

@@ -1,12 +1,16 @@
 package internal
 
 import (
+	"context"
 	"fmt"
 	"sync"
+	"time"
 )
 
 type Message[T any] struct {
 	Topic   string
+	Meta    map[string]string
+	Ctx     context.Context
 	Content T
 }
 
@@ -17,33 +21,57 @@ type Reg[T any] struct {
 
 type PubSub[T any] struct {
 	mu     sync.RWMutex
-	subs   map[string][]Reg[T]
+	regs   map[string]map[Reg[T]]struct{}
 	closed bool
 }
 
 func NewPubsub[T any]() *PubSub[T] {
 	ps := &PubSub[T]{}
-	ps.subs = make(map[string][]Reg[T])
+	ps.regs = make(map[string]map[Reg[T]]struct{})
 	return ps
 }
 
-func (ps *PubSub[T]) Subscribe(topic string, channel chan Message[T]) Reg[T] {
+func (ps *PubSub[T]) Subscribe(topic string) Reg[T] {
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
 
+	channel := make(chan Message[T])
 	reg := Reg[T]{topic, channel}
-	ps.subs[topic] = append(ps.subs[topic], reg)
+	_, found := ps.regs[topic]
+	if !found {
+		ps.regs[topic] = make(map[Reg[T]]struct{})
+	}
+	ps.regs[topic][reg] = struct{}{}
 	return reg
+}
+
+func removeAll[T any](ch chan T) {
+	for {
+		select {
+		case <-ch: 
+			fmt.Println("remove")
+			continue
+		default:
+			fmt.Println("no  activity")
+			return
+		}
+	}
 }
 
 func (ps *PubSub[T]) Unsubscribe(reg Reg[T]) {
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
 
-	regs, found := ps.subs[reg.topic]
+	regs, found := ps.regs[reg.topic]
 	if found {
-		// maybe close channel?
-		ps.subs[reg.topic] = Filter[Reg[T]](regs, func(item Reg[T]) bool { return item != reg })
+		fmt.Println("UNSUBSCRIBE", reg.topic)
+		delete(regs, reg)
+		if len(regs) == 0 {
+			delete(ps.regs, reg.topic)
+		}
+		removeAll[Message[T]](reg.channel)
+		fmt.Println("DONE UNSUBSCRIBE", reg.topic)
+		close(reg.channel)
 	}
 }
 
@@ -55,8 +83,8 @@ func (ps *PubSub[T]) Publish(topic string, content T) {
 		return
 	}
 
-	for _, reg := range ps.subs[topic] {
-		reg.channel <- Message[T]{topic, content}
+	for reg, _ := range ps.regs[topic] {
+		reg.channel <- Message[T]{Topic: topic, Content: content}
 	}
 }
 
@@ -66,8 +94,8 @@ func (ps *PubSub[T]) Close() {
 
 	if !ps.closed {
 		ps.closed = true
-		for _, subs := range ps.subs {
-			for _, reg := range subs {
+		for _, regs := range ps.regs {
+			for reg, _ := range regs {
 				close(reg.channel)
 			}
 		}
@@ -79,10 +107,10 @@ const topic = "TOPIC"
 func worker(name string, ps *PubSub[string], done func()) {
 	defer done()
 
-	channel := make(chan Message[string])
-	reg := ps.Subscribe(topic, channel)
+	reg := ps.Subscribe(topic)
+	fmt.Println("Subscribed", name)
 	for {
-		msg := <-channel
+		msg := <-reg.channel
 		fmt.Println(name, msg.Topic, msg.Content)
 		if msg.Content == "stop" {
 			ps.Unsubscribe(reg)
@@ -90,6 +118,11 @@ func worker(name string, ps *PubSub[string], done func()) {
 			return
 		}
 	}
+}
+
+func publish(ps *PubSub[string], text string) {
+	fmt.Println("Publis", text)
+	ps.Publish(topic, text)
 }
 
 func PubSubDemo() {
@@ -101,10 +134,13 @@ func PubSubDemo() {
 		name := fmt.Sprintf("sub%d", i)
 		go worker(name, ps, waitGroup.Done)
 	}
-	ps.Publish(topic, "one")
-	ps.Publish(topic, "two")
-	ps.Publish(topic, "stop")
-	ps.Publish(topic, "three")
-
+	time.Sleep(200 * time.Millisecond)
+	publish(ps, "one")
+	publish(ps, "two")
+	publish(ps, "stop")
+	//time.Sleep(200 * time.Millisecond)
+	for i := 0; i < 100; i++ {
+		ps.Publish(topic, fmt.Sprintf("msg-%d", i))
+	}
 	waitGroup.Wait()
 }
