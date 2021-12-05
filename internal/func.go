@@ -41,6 +41,15 @@ func Find[T any](list []T, cond func(T) bool) int {
 	return -1
 }
 
+func FindValue[T comparable](list []T, value T) int {
+	for index, item := range list {
+		if item == value {
+			return index
+		}
+	}
+	return -1
+}
+
 func Reduce[T any](init T, values []T, action func(acc T, value T) T) T {
 	result := init
 	for _, value := range values {
