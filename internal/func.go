@@ -14,10 +14,14 @@ func GetOrCreate[K comparable, V any](dict map[K]V, key K, create func(K) V) V {
 	return value
 }
 
-func RemoveIndex[T any](slice []T, index int) []T {	
-	dst := make([]T, index)
-	copy(dst, slice[:index])
-	return append(dst, slice[index+1:]...)
+func Append[T any](slice []T, values []T) []T {
+	dst := make([]T, len(slice))
+	copy(dst, slice)
+	return append(dst, values...)
+}
+
+func RemoveIndex[T any](slice []T, index int) []T {
+	return Append[T](slice[:index], slice[index+1:])
 }
 
 func Map[T, R any](list []T, transform func(T) R) []R {
@@ -56,7 +60,7 @@ func FindValue[T comparable](list []T, value T) int {
 	return -1
 }
 
-func Reduce[T any](init T, values []T, action func(acc T, value T) T) T {
+func Reduce[T any](values []T, init T, action func(acc T, value T) T) T {
 	acc := init
 	for _, value := range values {
 		acc = action(acc, value)
@@ -66,7 +70,7 @@ func Reduce[T any](init T, values []T, action func(acc T, value T) T) T {
 }
 
 func Min[T constraints.Ordered](init T, values ...T) T {
-	_min := func(lhs T, rhs T) T {
+	min := func(lhs T, rhs T) T {
 		if lhs < rhs {
 			return lhs
 		} else {
@@ -74,7 +78,7 @@ func Min[T constraints.Ordered](init T, values ...T) T {
 		}
 	}
 
-	return Reduce(init, values, _min)
+	return Reduce(values, init, min)
 }
 
 func Skip[T any](slice []T, n int) int {

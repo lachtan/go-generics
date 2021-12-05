@@ -85,10 +85,14 @@ func (ps *PubSub[T]) send(msg Message[T]) {
 
 func (ps *PubSub[T]) process(msg interface{}) {
 	switch v := msg.(type) {
-	case Reg[T]: ps.register(v)
-	case Unreg[T]: ps.unregister(v.reg)
-	case Message[T]: ps.send(v)
-	default: panic("Unknown message type")
+	case Reg[T]:
+		ps.register(v)
+	case Unreg[T]:
+		ps.unregister(v.reg)
+	case Message[T]:
+		ps.send(v)
+	default:
+		panic("Unknown message type")
 	}
 }
 
@@ -133,10 +137,10 @@ func (ps *PubSub[T]) Close() {
 const topic = "TOPIC"
 
 func worker(name string, ps *PubSub[string], stop string, done func()) {
-	reg := ps.Subscribe(topic, func(msg Message[string]) bool { 
+	reg := ps.Subscribe(topic, func(msg Message[string]) bool {
 		fmt.Println(name, "Received", msg.Topic, msg.Content)
 		quit := msg.Content == stop
-		if  quit{
+		if quit {
 			done()
 		}
 		return quit

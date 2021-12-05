@@ -7,6 +7,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestAppend(t *testing.T) {
+	l := []int{0, 1, 2, 3, 4}
+	r := Append[int](l[2:], l[:3])
+	assert.Equal(t, []int{2, 3, 4, 0, 1, 2}, r)
+}
+
 func TestRemoveIndex(t *testing.T) {
 	l := []int{0, 1, 2, 3}
 
@@ -45,4 +51,18 @@ func TestFind(t *testing.T) {
 
 	index = Find[int](src, func(item int) bool { return item > 100 })
 	assert.Equal(t, -1, index)
+}
+
+func TestFindValue(t *testing.T) {
+	src := []int{0, 1, 2, 3, 4, 5, 6}
+
+	assert.Equal(t, 3, FindValue[int](src, 3))
+	assert.Equal(t, -1, FindValue[int](src, 100))
+}
+
+func TestReduce(t *testing.T) {
+	src := []int{1, 2, 3, 4}
+
+	sum := Reduce[int](src, 0, func(acc int, val int) int { return acc + val })
+	assert.Equal(t, 10, sum)
 }
