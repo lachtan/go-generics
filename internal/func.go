@@ -5,11 +5,11 @@ import (
 	"fmt"
 )
 
-func GetOrCreate[T comparable, U any](m map[T]U, key T, create func() U) U {
-	value, exists := m[key]
+func GetOrCreate[K comparable, V any](dict map[K]V, key K, create func(K) V) V {
+	value, exists := dict[key]
 	if !exists {
-		value = create()
-		m[key] = value
+		value = create(key)
+		dict[key] = value
 	}
 	return value
 }

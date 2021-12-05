@@ -10,10 +10,10 @@ import (
 func TestGetOrCreate(t *testing.T) {
 	m := map[string]int{"one": 1, "two": 2}
 
-	assert.Equal(t, 2, GetOrCreate[string,int](m, "two", func(key string) int { return 0}))
+	assert.Equal(t, 2, GetOrCreate[string, int](m, "two", func(key string) int { return 0 }))
 	assert.Equal(t, map[string]int{"one": 1, "two": 2}, m)
 
-	assert.Equal(t, 3, GetOrCreate[string,int](m, "three", func(key string) int { return 3}))
+	assert.Equal(t, 3, GetOrCreate[string, int](m, "three", func(key string) int { return 3 }))
 	assert.Equal(t, map[string]int{"one": 1, "two": 2, "three": 3}, m)
 }
 
