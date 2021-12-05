@@ -7,6 +7,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestRemoveIndex(t *testing.T) {
+	l := []int{0, 1, 2, 3}
+
+	assert.Equal(t, []int{1, 2, 3}, RemoveIndex[int](l, 0))
+	assert.Equal(t, []int{0, 2, 3}, RemoveIndex[int](l, 1))
+	assert.Equal(t, []int{0, 1, 2}, RemoveIndex[int](l, 3))
+}
+
 func TestGetOrCreate(t *testing.T) {
 	m := map[string]int{"one": 1, "two": 2}
 

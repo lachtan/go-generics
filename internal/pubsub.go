@@ -53,7 +53,7 @@ func (ps *PubSub[T]) unregister(reg Reg[T]) {
 	if found {
 		index := Find[Reg[T]](consumers, func(x Reg[T]) bool { return x.id == reg.id })
 		if index > 0 {
-			ps.consumers[reg.topic] = append(consumers[:index], consumers[index+1:]...)
+			ps.consumers[reg.topic] = RemoveIndex[Reg[T]](consumers, index)
 		}
 	}
 }

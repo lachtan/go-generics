@@ -14,6 +14,12 @@ func GetOrCreate[K comparable, V any](dict map[K]V, key K, create func(K) V) V {
 	return value
 }
 
+func RemoveIndex[T any](slice []T, index int) []T {	
+	dst := make([]T, index)
+	copy(dst, slice[:index])
+	return append(dst, slice[index+1:]...)
+}
+
 func Map[T, R any](list []T, transform func(T) R) []R {
 	result := make([]R, len(list))
 	for index, item := range list {
@@ -51,12 +57,12 @@ func FindValue[T comparable](list []T, value T) int {
 }
 
 func Reduce[T any](init T, values []T, action func(acc T, value T) T) T {
-	result := init
+	acc := init
 	for _, value := range values {
-		result = action(result, value)
+		acc = action(acc, value)
 
 	}
-	return result
+	return acc
 }
 
 func Min[T constraints.Ordered](init T, values ...T) T {
